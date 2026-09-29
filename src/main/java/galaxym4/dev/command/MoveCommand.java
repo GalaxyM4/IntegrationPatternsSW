@@ -4,9 +4,9 @@ import galaxym4.dev.model.Shape;
 
 public class MoveCommand implements Command {
     private Shape shape;
-    private int dx, dy;
+    private double dx, dy;
 
-    public MoveCommand(Shape shape, int dx, int dy) {
+    public MoveCommand(Shape shape, double dx, double dy) {
         this.shape = shape;
         this.dx = dx;
         this.dy = dy;

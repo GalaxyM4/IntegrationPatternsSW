@@ -4,9 +4,9 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 public class Circle implements Shape {
-    private float x, y, radius = 30;
+    private double x, y, radius = 30;
 
-    public Circle(float x, float y) {
+    public Circle(double x, double y) {
         this.x = x;
         this.y = y;
     }
@@ -17,8 +17,12 @@ public class Circle implements Shape {
         gc.fillOval(x, y, radius, radius);
     }
     @Override
-    public void move(float dx, float dy) {
+    public void move(double dx, double dy) {
         this.x += dx;
         this.y += dy;
+    }
+    @Override
+    public boolean contains(double x, double y) {
+        return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) <= Math.pow(radius, 2);
     }
 }

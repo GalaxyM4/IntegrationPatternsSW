@@ -22,7 +22,26 @@ public class ShapeGroup implements Shape {
     }
 
     @Override
-    public void move(float dx, float dy) {
+    public void move(double dx, double dy) {
         for (Shape shape : shapes) shape.move(dx, dy);
     }
+
+    @Override
+    public boolean contains(double x, double y) {
+        for (Shape s : shapes) {
+            if (s.contains(x, y)) return true;
+        }
+        return false;
+    }
+
+    public Shape getClickedShape(double x, double y) {
+        for (int i = shapes.size() - 1; i >= 0; i--) {
+            Shape s = shapes.get(i);
+            if (s.contains(x, y)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
 }

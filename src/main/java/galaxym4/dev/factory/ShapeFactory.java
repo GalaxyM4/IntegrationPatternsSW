@@ -5,7 +5,7 @@ import galaxym4.dev.model.Rectangle;
 import galaxym4.dev.model.Shape;
 
 public class ShapeFactory {
-    public static Shape createShape(ShapeType type, int x, int y) {
+    public static Shape createShape(ShapeType type, double x, double y) {
         switch (type) {
             case CIRCLE:
                 return new Circle(x, y);

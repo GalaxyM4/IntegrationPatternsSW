@@ -4,8 +4,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 public class Rectangle implements Shape {
-    private float x, y, width = 30, height = 50;
-    public Rectangle(float x, float y) {
+    private double x, y, width = 30, height = 50;
+    public Rectangle(double x, double y) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -18,8 +18,12 @@ public class Rectangle implements Shape {
         gc.fillRect(x, y, width, height);
     }
     @Override
-    public void move(float dx, float dy) {
+    public void move(double dx, double dy) {
         x += dx;
         y += dy;
+    }
+    @Override
+    public boolean contains(double x, double y) {
+        return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
     }
 }

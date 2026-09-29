@@ -1,6 +1,7 @@
 package galaxym4.dev;
 import galaxym4.dev.command.AddCommand;
 import galaxym4.dev.command.CommandHistory;
+import galaxym4.dev.command.MoveCommand;
 import galaxym4.dev.factory.ShapeFactory;
 import galaxym4.dev.factory.ShapeType;
 import galaxym4.dev.model.Circle;
@@ -16,14 +17,20 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 public class App extends Application {
 
+    private enum AppMode { DRAW, MOVE }
+    private AppMode currentMode = AppMode.DRAW;
     private ShapeType selectedShapeType = ShapeType.CIRCLE;
+
     private ShapeGroup mainCanvas = new ShapeGroup();
     private CommandHistory history = new CommandHistory();
+
+    private Shape selectedShape = null;
+    private double lastX, lastY;
+    private double startDragX, startDragY;
 
     @Override
     public void start(Stage primaryStage) {
@@ -40,41 +47,77 @@ public class App extends Application {
         toolbar.setPadding(new Insets(10));
         toolbar.setStyle("-fx-background-color: #dddddd;");
 
-        Button btnCircle = new Button("Agregar Círculo");
-        Button btnRectangle = new Button("Agregar Rectángulo");
+        Button btnCircle = new Button("Agregar Circle");
+        Button btnRectangle = new Button("Agregar Rectangle");
+        Button btnMove = new Button("Mover Figura");
         Button btnUndo = new Button("Deshacer");
         Button btnRedo = new Button("Rehacer");
 
-        toolbar.getChildren().addAll(btnCircle, btnRectangle, btnUndo, btnRedo);
+        toolbar.getChildren().addAll(btnCircle, btnRectangle, btnMove, btnUndo, btnRedo);
         root.setTop(toolbar);
 
-        btnCircle.setOnAction(e -> selectedShapeType = ShapeType.CIRCLE);
-        btnRectangle.setOnAction(e -> selectedShapeType = ShapeType.RECTANGLE);
+        btnCircle.setOnAction(e -> { currentMode = AppMode.DRAW; selectedShapeType = ShapeType.CIRCLE; });
+        btnRectangle.setOnAction(e -> { currentMode = AppMode.DRAW; selectedShapeType = ShapeType.RECTANGLE; });
+        btnMove.setOnAction(e -> currentMode = AppMode.MOVE);
 
-        btnUndo.setOnAction(e -> {
-            history.undo();
-            redraw(gc, canvas);
+        btnUndo.setOnAction(e -> { history.undo(); redraw(gc, canvas); });
+        btnRedo.setOnAction(e -> { history.redo(); redraw(gc, canvas); });
+
+        canvas.setOnMousePressed(e -> {
+            if (currentMode == AppMode.DRAW) {
+                Shape newShape = ShapeFactory.createShape(selectedShapeType, e.getX(), e.getY());
+                AddCommand command = new AddCommand(mainCanvas, newShape);
+                history.executeCommand(command);
+                redraw(gc, canvas);
+            }
+            else if (currentMode == AppMode.MOVE) {
+                selectedShape = mainCanvas.getClickedShape(e.getX(), e.getY());
+                if (selectedShape != null) {
+                    lastX = e.getX();
+                    lastY = e.getY();
+                    startDragX = e.getX();
+                    startDragY = e.getY();
+                    scrollPane.setPannable(false);
+                }
+            }
         });
 
-        btnRedo.setOnAction(e -> {
-            history.redo();
-            redraw(gc, canvas);
+        canvas.setOnMouseDragged(e -> {
+            if (currentMode == AppMode.MOVE && selectedShape != null) {
+                double dx = (e.getX() - lastX);
+                double dy = (e.getY() - lastY);
+
+                selectedShape.move(dx, dy);
+
+                lastX = e.getX();
+                lastY = e.getY();
+                redraw(gc, canvas);
+            }
         });
 
-        canvas.setOnMouseClicked(e -> {
-            Shape newShape = ShapeFactory.createShape(
-                    selectedShapeType,
-                    (int) e.getX(),
-                    (int) e.getY()
-            );
+        canvas.setOnMouseReleased(e -> {
+            if (currentMode == AppMode.MOVE && selectedShape != null) {
+                double totalDx = (e.getX() - startDragX);
+                double totalDy = (e.getY() - startDragY);
 
-            AddCommand command = new AddCommand(mainCanvas, newShape);
-            history.executeCommand(command);
+                if (totalDx != 0 || totalDy != 0) {
+                    selectedShape.move(-totalDx, -totalDy);
 
-            redraw(gc, canvas);
+                    MoveCommand command = new MoveCommand(selectedShape, totalDx, totalDy);
+                    history.executeCommand(command);
+                }
+
+                selectedShape = null;
+                scrollPane.setPannable(true);
+            }
         });
 
         Scene scene = new Scene(root, 800, 600);
+        scene.setOnKeyPressed(e -> {
+            if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.Z) { history.undo(); redraw(gc, canvas); }
+            else if (e.isControlDown() && e.getCode() == javafx.scene.input.KeyCode.Y) { history.redo(); redraw(gc, canvas); }
+        });
+
         primaryStage.setTitle("Interactive Whiteboard - Design Patterns");
         primaryStage.setScene(scene);
         primaryStage.show();

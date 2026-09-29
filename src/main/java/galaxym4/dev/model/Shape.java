@@ -4,5 +4,6 @@ import javafx.scene.canvas.GraphicsContext;
 
 public interface Shape {
     void draw(GraphicsContext gc);
-    void move(float dx, float dy);
+    void move(double dx, double dy);
+    boolean contains(double x, double y);
 }
