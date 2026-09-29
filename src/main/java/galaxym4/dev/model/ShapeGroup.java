@@ -7,6 +7,7 @@ import java.util.List;
 
 public class ShapeGroup implements Shape {
     private List<Shape> shapes =  new ArrayList<Shape>();
+    private boolean selected = false;
 
     public void add(Shape shape) {
         shapes.add(shape);
@@ -14,6 +15,10 @@ public class ShapeGroup implements Shape {
 
     public void remove(Shape shape) {
         shapes.remove(shape);
+    }
+
+    public List<Shape> getShapes() {
+        return shapes;
     }
 
     @Override
@@ -44,4 +49,16 @@ public class ShapeGroup implements Shape {
         return null;
     }
 
+    @Override
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+        for (Shape s : shapes) {
+            s.setSelected(selected);
+        }
+    }
+
+    @Override
+    public boolean isSelected() {
+        return selected;
+    }
 }

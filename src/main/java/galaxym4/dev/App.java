@@ -1,6 +1,7 @@
 package galaxym4.dev;
 import galaxym4.dev.command.AddCommand;
 import galaxym4.dev.command.CommandHistory;
+import galaxym4.dev.command.GroupCommand;
 import galaxym4.dev.command.MoveCommand;
 import galaxym4.dev.factory.ShapeFactory;
 import galaxym4.dev.factory.ShapeType;
@@ -19,9 +20,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class App extends Application {
 
-    private enum AppMode { DRAW, MOVE }
+    private enum AppMode { DRAW, MOVE, SELECT }
     private AppMode currentMode = AppMode.DRAW;
     private ShapeType selectedShapeType = ShapeType.CIRCLE;
 
@@ -50,16 +54,32 @@ public class App extends Application {
         Button btnCircle = new Button("Agregar Circle");
         Button btnRectangle = new Button("Agregar Rectangle");
         Button btnMove = new Button("Mover Figura");
+        Button btnSelect = new Button("Seleccionar");
+        Button btnGroup = new Button("Agrupar");
         Button btnUndo = new Button("Deshacer");
         Button btnRedo = new Button("Rehacer");
 
-        toolbar.getChildren().addAll(btnCircle, btnRectangle, btnMove, btnUndo, btnRedo);
+        toolbar.getChildren().addAll(btnCircle, btnRectangle, btnMove, btnSelect, btnGroup, btnUndo, btnRedo);
         root.setTop(toolbar);
 
         btnCircle.setOnAction(e -> { currentMode = AppMode.DRAW; selectedShapeType = ShapeType.CIRCLE; });
         btnRectangle.setOnAction(e -> { currentMode = AppMode.DRAW; selectedShapeType = ShapeType.RECTANGLE; });
         btnMove.setOnAction(e -> currentMode = AppMode.MOVE);
+        btnGroup.setOnAction(e -> {
+            List<Shape> selectedShapes = new ArrayList<>();
+            for (Shape s : mainCanvas.getShapes()) {
+                if (s.isSelected()) {
+                    selectedShapes.add(s);
+                }
+            }
 
+            if (selectedShapes.size() > 1) {
+                GroupCommand cmd = new GroupCommand(mainCanvas, selectedShapes);
+                history.executeCommand(cmd);
+                redraw(gc, canvas);
+            }
+        });
+        btnSelect.setOnAction(e -> currentMode = AppMode.SELECT);
         btnUndo.setOnAction(e -> { history.undo(); redraw(gc, canvas); });
         btnRedo.setOnAction(e -> { history.redo(); redraw(gc, canvas); });
 
@@ -73,12 +93,19 @@ public class App extends Application {
             else if (currentMode == AppMode.MOVE) {
                 selectedShape = mainCanvas.getClickedShape(e.getX(), e.getY());
                 if (selectedShape != null) {
-                    lastX = e.getX();
-                    lastY = e.getY();
-                    startDragX = e.getX();
-                    startDragY = e.getY();
+                    lastX = e.getX(); lastY = e.getY();
+                    startDragX = e.getX(); startDragY = e.getY();
                     scrollPane.setPannable(false);
                 }
+            }
+            else if (currentMode == AppMode.SELECT) {
+                Shape clickedShape = mainCanvas.getClickedShape(e.getX(), e.getY());
+                if (clickedShape != null) {
+                    clickedShape.setSelected(!clickedShape.isSelected());
+                } else {
+                    mainCanvas.setSelected(false);
+                }
+                redraw(gc, canvas);
             }
         });
 
